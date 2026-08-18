@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <div class="form-card card">
+      <div class="eyebrow">MISSION LAB</div><h1 class="section-title">새 퀘스트 제안</h1>
+      <p class="page-copy" style="margin-bottom:25px">재미있거나 도움이 필요한 일을 미션으로 제안하고 다른 이용자의 참여를 기다려 보세요.</p>
+      <form th:action="@{/suggestions}" method="post" th:object="${form}">
+        <div class="field"><label for="category">카테고리</label><select class="form-control-oq" id="category" th:field="*{category}"><option th:each="category : ${categories}" th:value="${category}" th:text="${category.label}"></option></select></div>
+        <div class="field"><label for="title">미션 제목</label><input class="form-control-oq" id="title" th:field="*{title}" maxlength="120" placeholder="예: 오늘 하늘 한 장 찍기" required></div>
+        <div class="field"><label for="description">미션 설명</label><textarea class="form-control-oq" id="description" th:field="*{description}" maxlength="500" placeholder="어떻게 수행하면 되는지 짧게 알려 주세요." required></textarea></div>
+        <div class="field"><label for="bountyPoints">내가 거는 보상 포인트 <span class="help">(선택)</span></label><input class="form-control-oq" id="bountyPoints" type="number" min="0" max="10000" step="10" th:field="*{bountyPoints}"><div class="help" th:text="|현재 보유 ${memberPoints}P · 0P이면 일반 미션 제안으로 등록됩니다.|">현재 포인트</div></div>
+        <div class="button-row"><button class="btn-oq" type="submit">제안 등록</button><a class="btn-oq ghost" th:href="@{/suggestions}">취소</a></div>
+      </form>
+    </div>
+  </th:block>
+</th:block>
+</html>

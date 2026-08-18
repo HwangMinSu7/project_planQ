@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <header class="community-head"><div><div class="eyebrow">ADMIN</div><h1 class="page-title">신고·문의 관리</h1><p class="page-copy">사용자가 보낸 내용을 확인하고 처리 상태를 남깁니다.</p></div></header>
+    <nav class="category-tabs"><a th:href="@{/admin/reports}" th:classappend="${selectedStatus == null} ? 'active'">전체</a><a th:each="status : ${statuses}" th:href="@{/admin/reports(status=${status})}" th:classappend="${selectedStatus == status} ? 'active'" th:text="${status.label}">상태</a></nav>
+    <section class="report-list">
+      <article class="card report-card" th:each="report : ${reports.content}">
+        <div class="suggestion-top"><span class="tag" th:text="${report.kind.label}">신고</span><span class="suggestion-status" th:text="${report.status.label}">대기</span></div>
+        <h2 th:text="${report.targetTitle}">대상</h2><p th:text="${report.reason}">내용</p>
+        <div class="post-sub" th:text="|작성자 ${report.reporter.name} (${report.reporter.email})|">작성자</div>
+        <form class="button-row admin-actions" th:if="${report.status.name() == 'PENDING'}" th:action="@{/admin/reports/{id}/review(id=${report.id})}" method="post">
+          <button class="btn-oq small" name="status" value="RESOLVED" type="submit">처리 완료</button><button class="btn-oq ghost small" name="status" value="DISMISSED" type="submit">문제 없음</button>
+        </form>
+      </article>
+      <div class="card empty" th:if="${reports.empty}">접수된 신고·문의가 없습니다.</div>
+    </section>
+  </th:block>
+</th:block>
+</html>

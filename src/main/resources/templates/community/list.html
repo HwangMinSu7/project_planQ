@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <header class="community-head">
+      <div><div class="eyebrow">COMMUNITY</div><h1 class="page-title">같이하면 더 재밌으니까.</h1><p class="page-copy">이야기를 나누고 다음 모임을 계획하세요.</p></div>
+      <div class="button-row">
+        <a class="btn-oq danger" sec:authorize="hasRole('ADMIN')"
+           th:href="@{/community/new(category='NOTICE')}">공지 쓰기</a>
+        <a class="btn-oq" th:href="@{/community/new}">+ 새 글 쓰기</a>
+      </div>
+    </header>
+
+    <form class="search-bar card" th:action="@{/community}" method="get">
+      <input type="hidden" name="view" th:value="${viewMode}">
+      <select class="form-control-oq" name="category">
+        <option value="">전체 카테고리</option>
+        <option th:each="category : ${categories}" th:value="${category}" th:text="${category.label}" th:selected="${selectedCategory == category}"></option>
+      </select>
+      <input class="form-control-oq" name="keyword" th:value="${keyword}" placeholder="제목이나 내용으로 검색">
+      <button class="btn-oq" type="submit">검색</button>
+    </form>
+
+    <nav class="category-tabs">
+      <a th:href="@{/community(keyword=${keyword},view=${viewMode})}" th:classappend="${selectedCategory == null} ? 'active'">전체</a>
+      <a th:each="category : ${categories}" th:href="@{/community(category=${category},keyword=${keyword},view=${viewMode})}"
+         th:classappend="${selectedCategory == category} ? 'active'" th:text="${category.label}">카테고리</a>
+    </nav>
+
+    <div class="view-toolbar">
+      <span th:text="|게시글 ${posts.totalElements}개|">게시글 0개</span>
+      <nav class="view-switch" aria-label="게시글 보기 방식">
+        <a th:href="@{/community(category=${selectedCategory},keyword=${keyword},view='card')}"
+           th:classappend="${viewMode == 'card'} ? 'active'" title="사진 중심 카드형 보기">▦ 카드형</a>
+        <a th:href="@{/community(category=${selectedCategory},keyword=${keyword},view='list')}"
+           th:classappend="${viewMode == 'list'} ? 'active'" title="정보 중심 목록형 보기">☷ 목록형</a>
+      </nav>
+    </div>
+
+    <section class="card pin-sort-panel" sec:authorize="hasRole('ADMIN')" th:if="${!pinnedPosts.empty}">
+      <div><strong>📌 고정글 순서</strong><span>항목을 마우스로 끌어서 순서를 바꾼 뒤 저장하세요.</span></div>
+      <form id="pinOrderForm" th:action="@{/community/pinned/reorder}" method="post">
+        <ol id="pinnedSortable" class="pinned-sortable">
+          <li draggable="true" th:each="post : ${pinnedPosts}" th:data-id="${post.id}">
+            <span class="drag-handle">☰</span>
+            <b th:text="${post.category.label}">공지</b>
+            <span th:text="${post.title}">제목</span>
+            <input type="hidden" name="postIds" th:value="${post.id}">
+          </li>
+        </ol>
+        <button class="btn-oq small" type="submit">순서 저장</button>
+      </form>
+    </section>
+
+    <section class="card post-list" th:if="${viewMode == 'list'}">
+      <a class="post-row" th:each="post : ${posts.content}" th:href="@{/community/{id}(id=${post.id})}">
+        <span class="tag" th:classappend="${post.category.name() == 'MEETUP' ? 'meetup' : (post.category.name() == 'NOTICE' ? 'notice' : '')}" th:text="${post.category.label}">자유</span>
+        <div><div class="post-title"><small class="pin-mark" th:if="${post.pinned}">📌</small><span th:text="${post.title}">제목</span><small th:if="${post.imagePath != null}"> 📷</small><small th:if="${post.commentCount > 0}" th:text="|[${post.commentCount}]|"></small><small th:if="${post.likeCount > 0}" th:text="| ♥ ${post.likeCount}|"></small></div><div class="post-sub" th:if="${post.category.name() == 'MEETUP'}" th:text="|${#temporals.format(post.meetingAt, 'MM.dd HH:mm')} · ${post.meetingPlace}|">모임</div></div>
+        <span class="post-sub" th:text="${post.author.name}">작성자</span>
+        <span class="post-sub" th:text="${post.regDate != null ? #temporals.format(post.regDate, 'MM.dd HH:mm') : '기존 데이터'}">작성일</span>
+      </a>
+      <div class="empty" th:if="${posts.empty}">조건에 맞는 글이 없습니다.</div>
+    </section>
+
+    <section class="post-card-grid" th:if="${viewMode == 'card' and !posts.empty}">
+      <a class="community-post-card card" th:each="post : ${posts.content}" th:href="@{/community/{id}(id=${post.id})}">
+        <div class="post-card-media">
+          <img th:if="${post.imagePath != null}" th:src="@{/community/{id}/image(id=${post.id})}" alt="게시글 사진">
+          <div class="post-card-placeholder" th:unless="${post.imagePath != null}"><span>PLAN QUEST</span><strong>📷</strong></div>
+        </div>
+        <div class="post-card-body">
+          <div class="post-card-top"><span class="tag" th:classappend="${post.category.name() == 'MEETUP' ? 'meetup' : (post.category.name() == 'NOTICE' ? 'notice' : '')}" th:text="${post.category.label}">자유</span><time th:text="${post.regDate != null ? #temporals.format(post.regDate, 'MM.dd') : ''}">08.13</time></div>
+          <h2><small class="pin-mark" th:if="${post.pinned}">📌</small><span th:text="${post.title}">제목</span></h2>
+          <p th:text="${post.content}">내용</p>
+          <div class="post-card-meta"><span th:text="${post.author.name}">작성자</span><span th:text="|♥ ${post.likeCount} · 댓글 ${post.commentCount}|">반응</span></div>
+        </div>
+      </a>
+    </section>
+    <div class="card empty" th:if="${viewMode == 'card' and posts.empty}">조건에 맞는 글이 없습니다.</div>
+
+    <nav class="pagination-oq" th:if="${posts.totalPages > 1}">
+      <a th:each="i : ${#numbers.sequence(0, posts.totalPages - 1)}" th:href="@{/community(page=${i},category=${selectedCategory},keyword=${keyword},view=${viewMode})}" th:classappend="${i == posts.number} ? 'active'" th:text="${i + 1}">1</a>
+    </nav>
+    <script sec:authorize="hasRole('ADMIN')">
+      const sortable = document.querySelector('#pinnedSortable');
+      if (sortable) {
+        let dragging;
+        sortable.addEventListener('dragstart', event => {
+          dragging = event.target.closest('li');
+          dragging.classList.add('dragging');
+        });
+        sortable.addEventListener('dragend', () => {
+          dragging.classList.remove('dragging');
+          dragging = null;
+        });
+        sortable.addEventListener('dragover', event => {
+          event.preventDefault();
+          const target = event.target.closest('li');
+          if (!target || target === dragging) return;
+          const box = target.getBoundingClientRect();
+          sortable.insertBefore(dragging, event.clientY < box.top + box.height / 2 ? target : target.nextSibling);
+        });
+        document.querySelector('#pinOrderForm').addEventListener('submit', () => {
+          document.querySelector('#pinOrderForm').querySelectorAll('input[name="postIds"]').forEach(input => input.remove());
+          sortable.querySelectorAll('li').forEach(item => {
+            const input = document.createElement('input');
+            input.type = 'hidden'; input.name = 'postIds'; input.value = item.dataset.id;
+            document.querySelector('#pinOrderForm').appendChild(input);
+          });
+        });
+      }
+    </script>
+  </th:block>
+</th:block>
+</html>

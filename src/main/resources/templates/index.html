@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PLAN QUEST</title>
+  <link th:href="@{/css/styles.css}" rel="stylesheet">
+  <link th:href="@{/css/onequest.css}" rel="stylesheet">
+</head>
+<body class="app-body">
+  <nav class="oq-nav"><div class="oq-shell nav-inner"><a class="brand" th:href="@{/}"><span>PLAN</span> QUEST</a></div></nav>
+  <main class="oq-shell hero">
+    <div>
+      <div class="eyebrow">PLAN ONE SMALL ACTION A DAY</div>
+      <h1>오늘을<br><em>퀘스트</em>로.</h1>
+      <p>거창한 목표 대신, 오늘 딱 하나의 작은 도전. 사진과 한 줄로 인증하고 친구들과 다음 모임을 계획하세요.</p>
+      <div class="button-row" sec:authorize="isAnonymous()">
+        <a class="btn-oq secondary" th:href="@{/auth/register}">무료로 시작하기</a>
+        <a class="btn-oq ghost" th:href="@{/auth/login}">로그인</a>
+      </div>
+      <div class="button-row" sec:authorize="isAuthenticated()">
+        <a class="btn-oq secondary" th:href="@{/quest}">오늘의 퀘스트 열기</a>
+        <a class="btn-oq ghost" th:href="@{/community}">커뮤니티 가기</a>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="eyebrow" style="color:#c9ff47">QUEST #042</div>
+      <strong>오늘 하늘 한 장 찍기</strong>
+      <p style="color:#bcb6c9;font-size:15px">고개를 들어 오늘만 볼 수 있는 장면을 남겨 보세요.</p>
+      <div class="hero-clear-preview" aria-hidden="true">CLEAR +100P</div>
+    </div>
+  </main>
+</body>
+</html>

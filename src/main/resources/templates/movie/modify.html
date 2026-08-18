@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <style>
+        .form-group {margin-bottom: 20px;}
+        .modal-body input {margin-bottom: 10px;}
+        .uploadResult {width: 100%;background: gray;margin-top: 10px;}
+        .uploadResult ul {
+            display: flex;flex-flow: row;justify-content: center;
+            align-items: center;vertical-align: top;overflow: auto;
+        }
+        .uploadResult ul li {list-style: none;padding: 10px;margin-left: 2em;}
+        .uploadResult ul li img {width: 70px;}
+        .star {position: relative;font-size: 2rem;color: #ddd;}
+        .star input {width: 100%;height: 100%;position: absolute;left: 0;
+            opacity: 0;cursor: pointer;}
+        .star span {width: 0;position: absolute;left: 0;color: #ffc83d;
+            overflow: hidden;pointer-events: none;-webkit-text-stroke: 2px black;
+        }
+    </style>
+
+    <h1 class="mt-4">Movie Modify Page</h1>
+    <form th:action="@{/movie/modify}" method="post" id="frmModify">
+      <div class="form-group">
+        <label for="mno">Mno</label>
+        <input type="text" name="mno" id="mno" class="form-control" th:value="${movieDTO.mno}" readonly/>
+      </div>
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" name="title" id="title" class="form-control" th:value="${movieDTO.title}" />
+      </div>
+      <div class="form-group">
+        <label for="avg">Average Rating</label>
+        <input type="text" name="avg" id="avg" class="form-control"
+               th:value="${movieDTO.avg}" readonly />
+      </div>
+      <div class="form-group">
+        <label for="reviewCnt">Review Count</label>
+        <input type="text" name="reviewCnt" id="reviewCnt" class="form-control"
+               th:value="${movieDTO.reviewCnt}" readonly />
+      </div>
+      <div class="form-group">
+        <label>Regist Date</label>
+        <input type="text" class="form-control"
+               th:value="${#temporals.format(movieDTO.regDate, 'yyyy/MM/dd hh:mm')}" readonly />
+      </div>
+      <div class="form-group">
+        <label>Modified Date</label>
+        <input type="text" class="form-control"
+               th:value="${#temporals.format(movieDTO.modDate, 'yyyy/MM/dd hh:mm')}" readonly />
+      </div>
+      <div class="form-group fileForm">
+        <label for="fileInput">Select Image Files</label>
+        <input type="file" class="custom-file-input files form-control files" id="fileInput" multiple />
+        <label id="upload-caption"></label>
+      </div>
+      <!-- box:: modify를 submit 할 때 uploadResult의 정보를 form 안에 hidden 으로 재구성 -->
+      <div class="box"></div>
+      <div class="form-group">
+        <input type="hidden" name="page" th:value="${pageRequestDTO.page}">
+        <input type="hidden" name="type" th:value="${pageRequestDTO.type}">
+        <input type="hidden" name="keyword" th:value="${pageRequestDTO.keyword}">
+        <button class="btn btn-primary btnModify">Modify</button>
+        <button class="btn btn-danger btnDelete">Delete</button>
+        <button class="btn btn-info btnBack">Back</button>
+      </div>
+    </form>
+    <!-- 영화포스터가 있는 경우 출력해주는 부분 -->
+    <div class="uploadResult">
+      <ul>
+        <li th:if="${movieDTO.imageDTOList.size()>0}"
+            th:each="movieImageDTO : ${movieDTO.imageDTOList}"
+            th:data-path='${movieImageDTO.path}'
+            th:data-uuid='${movieImageDTO.uuid}'
+            th:data-file="${movieImageDTO.getImageURL}"
+            th:data-name='${movieImageDTO.imgName}'
+            style="cursor:pointer;">
+          <div>
+            <button type="button" th:onclick="javascript:this.closest('li').remove()">X</button>
+            <span th:if="${movieImageDTO.path != null}"><img
+                th:src="|@{/display(fileName=${movieImageDTO.getThumbnailURL})}|"
+                th:onclick="viewPicture([[${movieImageDTO.getImageURL}]])"
+                alt="poster"></span>
+            <span th:if="${movieImageDTO.path == null}"><img
+                src="https://placehold.co/70x100/lightblue/white?text=no+image\npath"
+                alt="poster"></span>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <script th:inline="javascript">
+      const mno = /*[[${movieDTO.mno}]]*/'mno'
+      const btnModify = document.querySelector(".btnModify")
+      const btnDelete = document.querySelector(".btnDelete")
+      const btnBack = document.querySelector(".btnBack")
+      const frmModify = document.querySelector("#frmModify")
+
+      btnModify.onclick = e => {
+        e.preventDefault()
+        if (!title.value) {
+          title.setAttribute('placeholder', "Title을 확인해주세요")
+          title.focus();
+          return;
+        }
+        // uploadResult에 있는 내용을 box에 hidden으로 옮기는 코드
+        let str = ''
+        const liArr = document.querySelectorAll(".uploadResult ul li")
+        for (let i = 0; i < liArr.length; i++) {
+          str += `
+              <input type="hidden" name="imageDTOList[${i}].imgName" value="${liArr[i].dataset.name}">
+              <input type="hidden" name="imageDTOList[${i}].path" value="${liArr[i].dataset.path}">
+              <input type="hidden" name="imageDTOList[${i}].uuid" value="${liArr[i].dataset.uuid}">
+          `
+        }
+        document.querySelector(".box").innerHTML = str
+        frmModify.submit(); // btnModify를 눌러서 /movie/modify로 전송
+      }
+      btnDelete.onclick = e => {
+        e.preventDefault();
+        document.querySelector("form").setAttribute('action', /*[[@{/movie/remove}]]*/'remove')
+        document.querySelector("form").submit();
+      }
+      btnBack.onclick = e => {
+        e.preventDefault();
+        window.history.back();
+      }
+      function checkExtension(fileName, fileSize){
+        maxSize = 1024*1024*10;
+        if(fileSize >= maxSize) {alert("파일사이즈 초과");return false; }
+        // https://developer.mozilla.org/ko/docs/Web/JavaScript/Guide/Regular_expressions
+        //const regex = new RegExp("(.*?)\.(exe|sh|zip|alz|tiff)$");
+        const regex = new RegExp("(.*?)\.(jpg|jpeg|png|gif|bmp|pdf)$",'i');//i대소문자구분X
+        if(!regex.test(fileName)) {alert("해당파일 업로드 금지!");return false; }
+        return true
+      }
+      document.querySelector("#fileInput").onchange = function() {
+        let formData = new FormData(); // 이미지만 submit하기 위한 객체 생성
+        const fileName = this.value.split("\\").pop();
+        let label = document.querySelector("#upload-caption")
+        label.innerHTML = (this.files.length - 1) == 0 ?'':
+            `${fileName} 외 ${fileInput.files.length - 1}개`
+
+        let files = this.files;  // fileInput의 선택된 파일 목록을 files에 담음
+        let isExtension = false;
+        for(let i=0;i<files.length;i++) {
+          // checkExtension::파일확장자, 사이즈가 조건에 안맞을 경우
+          if(!checkExtension(this.files[i].name, this.files[i].size)) {
+            label.innerHTML = ''; this.value= '';
+            isExtension = true; break;
+          }
+          // checkExtension::파일확장자, 사이즈가 조건에 맞을 경우
+          formData.append("uploadFiles", files[i])
+        }
+        if(isExtension) return; // 안맞을 경우 함수 진행 멈춤
+
+        const url = /*[[@{/uploadAjax}]]*/'url'
+        fetch(url, {
+          method: 'POST', body: formData, dataType: 'json',
+        })
+            .then(res => res.json())
+            .then(json => {
+              console.log(json)
+              showResult(json) //업로드후에 목록 uploadResult에 추가하는 함수
+            })
+            .catch(err => console.log("Error occurred: " , err))
+      }
+      function showResult(arr) {
+        const uploadUL = document.querySelector(".uploadResult ul");
+        let str = ""
+        const url = /*[[@{/display}]]*/'url'
+        for(let i=0;i<arr.length;i++){
+          str += `<li data-name='${arr[i].fileName}' data-path='${arr[i].folderPath}'
+                  data-uuid='${arr[i].uuid}' data-file='${arr[i].imageURL}'><div>
+                  <button class="removeBtn" type="button">X</button>
+                  <img src="${url}?fileName=${arr[i].thumbnailURL}">
+                  </div></li>`
+        }
+        uploadUL.innerHTML += str; // 기존 uploadResult의 목록에 추가하는 연산
+        const removeBtns = document.querySelectorAll(".removeBtn");
+        // 모든 닫기버튼 불러와서 이베튼 처리함.
+        for(let i=0;i<removeBtns.length;i++){
+          removeBtns[i].onclick = function() {
+            this.closest('li').remove(); // 화면상에서만 삭제
+          }
+        }
+      }
+      // 원본 이미지 보기
+      function viewPicture(file) {
+        const myModal = new bootstrap.Modal(document.querySelector('#myModal'), { backdrop: true });
+        const url = /*[[@{/display}]]*/'url'
+        document.querySelector(".modal-title").innerHTML = `<p>원본 이미지</p>`
+        document.querySelector(".modal-body").innerHTML =
+            `<img style='width: 100%' src='${url}?fileName=${file}'>`
+        myModal.show();
+      }
+    </script>
+  </th:block>
+</th:block>
+</html>

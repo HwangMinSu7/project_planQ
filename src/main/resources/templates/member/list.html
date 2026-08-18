@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<!-- ~{} 템플릿이나 조각을 지정하는 문법 -->
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <h1 class="mt-4">Member List Page
+      <a th:href="@{/member/register}" class="btn btn-outline-primary">Register</a>
+    </h1>
+    <form th:action="@{/member/list}" method="get" id="frmSrch" style="margin-bottom: 10px;">
+      <div class="input-group">
+        <div class="input-group-prepend" style="margin-right: 10px;">
+          <select name="type" id="type" class="form-control">
+            <option value="" th:selected="${pageRequestDTO.type == null}">전체보기</option>
+            <option value="t" th:selected="${pageRequestDTO.type == 't'}">제목</option>
+            <option value="c" th:selected="${pageRequestDTO.type == 'c'}">내용</option>
+            <option value="w" th:selected="${pageRequestDTO.type == 'w'}">작성자</option>
+            <option value="tc" th:selected="${pageRequestDTO.type == 'tc'}">제목+내용</option>
+            <option value="tcw" th:selected="${pageRequestDTO.type == 'tcw'}">제목+내용+작성자</option>
+          </select>
+        </div>
+        <input type="text" name="keyword" id="keyword" class="form-control" style="border-radius: 5px"
+               th:value="${pageRequestDTO.keyword}">
+        <div class="input-group-append" style="margin-left: 10px">
+          <button type="submit" class="btn btn-outline-primary btnSrch">검색</button>
+        </div>
+      </div>
+    </form>
+    <table class="table table-striped">
+      <tr>
+        <th>Mid</th>
+        <th>Email</th>
+        <th>Nickname</th>
+        <th>Register Date</th>
+        <th>Modified Date</th>
+      </tr>
+      <tr th:each="memberDTO : ${pageResultDTO.dtoList}"
+          style="cursor: pointer;"
+          onmouseover="this.style.background='#dbdbdb'"
+          onmouseout="this.style.background='white'"
+          th:onclick="goRead([[${memberDTO.mid}]], [[${pageResultDTO.page}]],
+          [[${pageRequestDTO.type}]], [[${pageRequestDTO.keyword}]])">
+        <td>[[${memberDTO.mid}]]</td>
+        <td>[[${memberDTO.email}]]</td>
+        <td>[[${memberDTO.nickname}]]</td>
+        <td>[[${#temporals.format(memberDTO.regDate, 'yyyy/MM/dd hh:mm')}]]</td>
+        <td>[[${#temporals.format(memberDTO.modDate, 'yyyy/MM/dd hh:mm')}]]</td>
+      </tr>
+    </table>
+    <ul class="pagination h-100 justify-content-center align-items-center">
+      <li class="page-item" th:if="${pageResultDTO.prev}">
+        <a th:href="@{/member/list(page=${pageResultDTO.start-1},type=${pageRequestDTO.type},keyword=${pageRequestDTO.keyword})}"
+           class="page-link">Prev</a>
+      </li>
+      <li th:each="page:${pageResultDTO.pageList}" th:class="'page-item'+${pageResultDTO.page==page?' active':''}">
+        <a th:href="@{/member/list(page=${page},type=${pageRequestDTO.type},keyword=${pageRequestDTO.keyword})}"
+           class="page-link">[[${page}]]</a>
+      </li>
+      <li class="page-item" th:if="${pageResultDTO.next}">
+        <a th:href="@{/member/list(page=${pageResultDTO.end+1},type=${pageRequestDTO.type},keyword=${pageRequestDTO.keyword})}"
+           class="page-link">Next</a>
+      </li>
+    </ul>
+    <!-- start bootstrap.com modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-email fs-5" id="exampleModalLabel">Modal email</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <!-- <button type="button"  class="btn btn-primary">Save changes</button> -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <script th:inline="javascript">
+      window.onload = () => {
+        let msg = /*[[${msg}]]*/'msg'
+        if (msg) {
+          const myModal = new bootstrap.Modal(document.querySelector('#myModal'), {backdrop: true});
+          document.querySelector(".modal-email").innerHTML = '<p>알림</p>'
+          document.querySelector(".modal-body").textContent = msg
+          myModal.show();
+          history.replaceState({}, null, null) //모달창 띄운 흔적을 history에서 제거
+        }
+
+        // 검색을 위한 변수 선언
+        const btnSrch = document.querySelector(".btnSrch")
+        const frmSrch = document.querySelector("#frmSrch")
+        const type = document.querySelector("#type")
+        const keyword = document.querySelector("#keyword")
+
+        // document가 열리면 기본이 select type의 선택하세요 일 경우
+        keyword.disabled = type.value == "" ? true : false;
+        btnSrch.disabled = type.value == "" ? true : false;
+
+        // select를 변경할 때
+        type.onchange = () => {
+          keyword.setAttribute('placeholder', "")
+          if (type.options[0].selected) { // 전체 선택일 경우
+            keyword.value = "";
+            frmSrch.submit()
+            keyword.disabled = true; // 비활성화
+            btnSrch.disabled = true; // 비활성화
+          } else { // 그외 일 경우
+            keyword.disabled = false; // 활성화
+            btnSrch.disabled = false; // 활성화
+          }
+        }
+      }
+
+      function goRead(mid, page, type, keyword) {
+        const url = /*[[@{/member/read}]]*/'url'
+        location.href = url + `?mid=${mid}&page=${page}&type=${type}&keyword=${keyword}`
+      }
+    </script>
+  </th:block>
+</th:block>
+</html>

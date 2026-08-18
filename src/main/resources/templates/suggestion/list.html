@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <header class="community-head">
+      <div><div class="eyebrow">MISSION LAB</div><h1 class="page-title">다음 미션은 우리가.</h1><p class="page-copy">재미있거나 필요한 미션을 제안하면 검토 후 다른 이용자가 수행자로 참여할 수 있어요.</p></div>
+      <a class="btn-oq secondary" th:href="@{/suggestions/new}">+ 미션 제안하기</a>
+    </header>
+
+    <nav class="category-tabs">
+      <a th:href="@{/suggestions}" th:classappend="${selectedStatus == null} ? 'active'">전체</a>
+      <a th:each="status : ${statuses}" th:href="@{/suggestions(status=${status})}" th:classappend="${selectedStatus == status} ? 'active'" th:text="${status.label}">상태</a>
+    </nav>
+
+    <section class="suggestion-grid">
+      <article class="card suggestion-card" th:each="suggestion : ${suggestions.content}">
+        <a class="suggestion-card-link" th:href="@{/suggestions/{id}(id=${suggestion.id})}">
+          <div class="suggestion-top"><span class="tag" th:text="${suggestion.category.label}">일상</span><span class="suggestion-status" th:classappend="${suggestion.status.name().toLowerCase()}" th:text="${suggestion.status.label}">검토 중</span></div>
+          <h2 th:text="${suggestion.title}">미션 제목</h2>
+          <p th:text="${suggestion.description}">설명</p>
+          <div class="post-sub" th:text="|제안자 ${suggestion.author.name}|">제안자</div>
+        </a>
+        <div class="bounty-info">
+          <strong th:text="|🎁 보상 ${suggestion.bountyPoints}P|">보상 100P</strong>
+          <span th:if="${suggestion.performer == null and suggestion.applicant == null}">수행자 모집 중</span>
+          <span th:if="${suggestion.performer == null and suggestion.applicant != null}">작성자 수락 확인 중</span>
+          <span th:if="${suggestion.performer != null}" th:text="|수행자 ${suggestion.performer.name}|">수행자</span>
+          <span th:if="${suggestion.pointsSettled}">미션 완료</span>
+        </div>
+        <div class="button-row"><a class="btn-oq ghost small" th:href="@{/suggestions/{id}(id=${suggestion.id})}">미션 자세히 보기</a><a class="link-button suggestion-report" th:href="@{/reports/new(targetType='SUGGESTION',targetId=${suggestion.id})}">신고</a></div>
+        <div class="button-row admin-actions" sec:authorize="hasRole('ADMIN')" th:if="${suggestion.status.name() == 'PENDING'}">
+          <form th:action="@{/suggestions/{id}/approve(id=${suggestion.id})}" method="post"><button class="btn-oq small" type="submit">승인</button></form>
+          <form th:action="@{/suggestions/{id}/reject(id=${suggestion.id})}" method="post"><button class="btn-oq danger small" type="submit">반려</button></form>
+        </div>
+      </article>
+      <div class="card empty" th:if="${suggestions.empty}">아직 등록된 미션 제안이 없습니다.</div>
+    </section>
+
+    <nav class="pagination-oq" th:if="${suggestions.totalPages > 1}">
+      <a th:each="i : ${#numbers.sequence(0, suggestions.totalPages - 1)}" th:href="@{/suggestions(page=${i},status=${selectedStatus})}" th:classappend="${i == suggestions.number} ? 'active'" th:text="${i + 1}">1</a>
+    </nav>
+  </th:block>
+</th:block>
+</html>

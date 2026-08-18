@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layout/basic::setNickname(~{this::nickname})}">
+  <th:block th:fragment="nickname">
+    <style>
+        .form-group {margin: 30px 0 30px 0;}
+    </style>
+    <h1 class="mt-4">Member Modify Page</h1>
+    <form th:action="@{/member/modify}" method="post">
+      <div class="form-group">
+        <label for="mid">Mid</label>
+        <input type="text" name="mid" id="mid" class="form-control" th:value="${memberDTO.mid}" readonly />
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="text" name="email" id="email" class="form-control" th:value="${memberDTO.email}" />
+      </div>
+      <div class="form-group">
+        <label for="nickname">Nickname</label>
+        <input type="text" name="nickname" id="nickname" class="form-control"
+               th:value="${memberDTO.nickname}" />
+      </div>
+      <div class="form-group">
+        <label>Regist Date</label>
+        <input type="text" class="form-control"
+               th:value="${#temporals.format(memberDTO.regDate, 'yyyy/MM/dd hh:mm')}" readonly>
+      </div>
+      <div class="form-group">
+        <label>Modified Date</label>
+        <input type="text" class="form-control"
+               th:value="${#temporals.format(memberDTO.modDate, 'yyyy/MM/dd hh:mm')}" readonly>
+      </div>
+      <div class="form-group">
+        <input type="hidden" name="page" th:value="${pageRequestDTO.page}">
+        <input type="hidden" name="type" th:value="${pageRequestDTO.type}">
+        <input type="hidden" name="keyword" th:value="${pageRequestDTO.keyword}">
+        <button class="btn btn-primary btnModify">Modify</button>
+        <button class="btn btn-danger btnDelete">Delete</button>
+        <button class="btn btn-info btnBack">Back</button>
+      </div>
+    </form>
+    <script th:inline="javascript">
+      const btnModify = document.querySelector(".btnModify")
+      const btnDelete = document.querySelector(".btnDelete")
+      const btnBack = document.querySelector(".btnBack")
+      btnModify.onclick = e => {
+        e.preventDefault()
+        if (!email.value) {
+          email.setAttribute('placeholder', "Email을 확인해주세요")
+          email.focus();
+          return;
+        }
+        if (!nickname.value) {
+          nickname.setAttribute('placeholder', "nickname를 확인해주세요")
+          nickname.focus();
+          return;
+        }
+
+        document.querySelector("form").submit();
+      }
+      btnDelete.onclick = e => {
+        e.preventDefault();
+        document.querySelector("form").setAttribute('action', /*[[@{/member/remove}]]*/'remove')
+        document.querySelector("form").submit();
+      }
+      btnBack.onclick = e => {
+        e.preventDefault();
+        window.history.back();
+      }
+    </script>
+  </th:block>
+</th:block>
+</html>

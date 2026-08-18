@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <header class="community-head"><div><div class="eyebrow">NOTIFICATION</div><h1 class="page-title">알림</h1><p class="page-copy">미션 수락 요청과 진행 상황을 확인하세요.</p></div><form th:if="${!notifications.empty}" th:action="@{/notifications/read-all}" method="post"><button class="btn-oq ghost small" type="submit">모두 읽음</button></form></header>
+    <section class="card notification-list">
+      <form th:each="notification : ${notifications}" th:action="@{/notifications/{id}/read(id=${notification.id})}" method="post">
+        <button class="notification-item" th:classappend="${notification.read} ? '' : 'unread'" type="submit"><span th:text="${notification.read} ? '○' : '●'">●</span><strong th:text="${notification.message}">알림 내용</strong><time th:text="${notification.regDate != null ? #temporals.format(notification.regDate, 'MM.dd HH:mm') : ''}">시간</time></button>
+      </form>
+      <div class="empty" th:if="${notifications.empty}">새로운 알림이 없습니다.</div>
+    </section>
+  </th:block>
+</th:block>
+</html>

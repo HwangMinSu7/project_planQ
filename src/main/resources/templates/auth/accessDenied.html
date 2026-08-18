@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>접근 제한 · PLAN QUEST</title>
+  <link th:href="@{/css/styles.css}" rel="stylesheet">
+  <link th:href="@{/css/onequest.css}" rel="stylesheet">
+</head>
+<body class="auth-page">
+  <section class="auth-card error-card">
+    <a class="brand" th:href="@{/}"><span>PLAN</span> QUEST</a>
+    <div class="error-number">403</div>
+    <h1>접근할 수 없습니다.</h1>
+    <p>현재 계정으로는 이 기능을 사용할 수 없습니다.</p>
+    <div class="button-row">
+      <a class="btn-oq" th:href="@{/quest}">퀘스트로 이동</a>
+      <button class="btn-oq ghost" type="button" onclick="history.back()">이전 화면</button>
+    </div>
+  </section>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <style>
+        .form-group {margin: 30px 0;}
+
+        .uploadResult {
+            width: 100%;
+            background: gray;
+            margin-top: 10px;
+        }
+
+        .uploadResult ul {
+            display: flex;
+            flex-flow: row;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+        }
+
+        .uploadResult ul li {
+            list-style: none;
+            padding: 10px;
+            margin-left: 2em;
+        }
+
+        .uploadResult ul li img {
+            width: 100px;
+        }
+    </style>
+    <h1 class="mt-4">Movie Register Page</h1>
+    <form th:action="@{/movie/register}" method="post">
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" name="title" id="title" class="form-control" placeholder="제목" />
+      </div>
+      <div class="form-group">
+        <label for="fileInput">Select Image Files</label>
+        <input type="file" id="fileInput" class="custom-file-input files form-control" multiple />
+        <label id="upload-caption"></label>
+      </div>
+      <div class="form-group box"></div>
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary btn-register">Submit</button>
+      </div>
+    </form>
+    <div class="uploadResult">
+      <ul></ul>
+    </div>
+    <script th:inline="javascript">
+      const btnRegister = document.querySelector(".btn-register")
+      const title = document.querySelector("#title")
+      function checkExtension(fileName, fileSize) {
+        maxSize = 1024 * 1024 * 10 //10mb이하
+        if (fileSize >= maxSize) { alert("파일 사이즈 초과"); return false; }
+        // https://developer.mozilla.org/ko/docs/Web/JavaScript/Guide/Regular_expressions
+        // const regex = new RegExp("(.*?)\.(exe|sh|zip|alz|tiff)$");
+        const regEx = new RegExp("(.*?)\.(jpg|jpeg|png|gif|bmp|pdf)$", 'i')
+        if (!regEx.test(fileName)) { alert("해당 파일 업로드 금지!"); return false; }
+        return true;
+      }
+      btnRegister.onclick = e => {
+        e.preventDefault()
+        if (!title.value) {
+          title.setAttribute('placeholder', "Title을 확인해주세요")
+          title.focus();
+          return;
+        }
+        let str = ""
+        const liArr = document.querySelectorAll(".uploadResult ul li");
+        for (let i = 0; i < liArr.length; i++) {
+          str += `<input type="hidden" name="imageDTOList[${i}].imgName" value="${liArr[i].dataset.name}"/>
+                  <input type="hidden" name="imageDTOList[${i}].path" value="${liArr[i].dataset.path}"/>
+                  <input type="hidden" name="imageDTOList[${i}].uuid" value="${liArr[i].dataset.uuid}"/>
+                 `;
+        }
+        document.querySelector(".box").innerHTML = str;
+
+        document.querySelector("form").submit();
+      }
+      document.querySelector("#fileInput").onchange = function () {
+        let formData = new FormData();
+        let files = this.files;
+        let isCheck = false;
+        for (let i = 0; i < files.length; i++) {
+          if(!checkExtension(files[i].name, files[i].size)) {
+            isCheck = true; alert("이미지 파일만 추가가능.");break;
+          }
+          formData.append("uploadFiles", files[i]);
+        }
+        if(isCheck) return;
+
+        const url = /*[[@{/uploadAjax}]]*/'url'
+        fetch(url, {method: 'post', body: formData, dataType: 'json'})
+        .then(res => res.json())
+        .then(data => {
+          showUploadedImages(data);
+        })
+      }
+      function showUploadedImages(arr) {
+        const uploadResultUl = document.querySelector(".uploadResult ul")
+        let str = ""
+        const url = /*[[@{/display}]]*/'url'
+        for (let i = 0; i < arr.length; i++) {
+          str+=`<li data-name="${arr[i].fileName}" data-path="${arr[i].folderPath}"
+                  data-uuid="${arr[i].uuid}" data-file="${arr[i].imageURL}">
+                  <div><button class='removeBtn' data-name='${arr[i].imageURL}'>X</button>
+                  <img src='${url}?fileName=${arr[i].thumbnailURL}'></div></li>`
+        }
+        uploadResultUl.innerHTML = str // div가 DOM트리에 마운트 됨.
+
+        const removeBtns = document.querySelectorAll(".removeBtn")
+        for (let i = 0; i < removeBtns.length; i++) {
+          removeBtns[i].onclick = function() {
+            const fileName = this.dataset.name
+            const formData = new FormData();
+            formData.append('fileName', fileName)
+            const url = /*[[@{/removeFile}]]*/
+                fetch(url, {method:'POST', body:formData,})
+                    .then(res => res.json())
+                    .then(json => {
+                      if(json) this.closest('li').remove();
+                    })
+                    .catch(err => console.log("Error:", err))
+          }
+        }
+      }
+    </script>
+  </th:block>
+</th:block>
+</html>

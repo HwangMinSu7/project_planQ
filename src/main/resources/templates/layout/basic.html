@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<th:block th:fragment="setContent(content)">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="하루 하나의 작은 도전, PLAN QUEST">
+    <title>PLAN QUEST</title>
+    <link rel="icon" type="image/x-icon" th:href="@{/assets/favicon.ico}">
+    <link th:href="@{/css/styles.css}" rel="stylesheet">
+    <link th:href="@{/css/onequest.css}" rel="stylesheet">
+  </head>
+  <body class="app-body">
+    <nav class="oq-nav">
+      <div class="oq-shell nav-inner">
+        <a class="brand" th:href="@{/quest}"><span>PLAN</span> QUEST</a>
+        <button class="nav-toggle" type="button" aria-controls="mainNav" aria-expanded="false">☰</button>
+        <div class="nav-links" id="mainNav">
+          <a th:href="@{/quest}">오늘의 퀘스트</a>
+          <a th:href="@{/community}">커뮤니티</a>
+          <a th:href="@{/suggestions}">미션 제안</a>
+          <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/reports}">신고·문의</a>
+          <a th:href="@{/mypage}">마이페이지</a>
+        </div>
+        <div class="nav-user" sec:authorize="isAuthenticated()">
+          <b class="admin-chip" sec:authorize="hasRole('ADMIN')">운영자</b>
+          <span sec:authentication="name"></span>
+          <a class="notification-bell" th:href="@{/notifications}" aria-label="알림">🔔<b th:if="${notificationUnreadCount > 0}" th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">1</b></a>
+          <form th:action="@{/logout}" method="post"><button class="link-button" type="submit">로그아웃</button></form>
+        </div>
+      </div>
+    </nav>
+
+    <main class="oq-shell page-space">
+      <div class="flash success" th:if="${msg}" th:text="${msg}"></div>
+      <div class="flash error" th:if="${error}" th:text="${error}"></div>
+      <th:block th:replace="${content}"></th:block>
+    </main>
+
+    <footer class="oq-footer">PLAN QUEST · Plan small, keep going.</footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/onequest.js}"></script>
+  </body>
+</th:block>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<!--템플릿이나 조각을 지정하는 문법-->
+<th:block th:replace="~{layout/basic::setNickname(~{this::nickname})}">
+  <th:block th:fragment="nickname">
+    <style>
+      .form-group {margin: 30px 0 30px 0;}
+    </style>
+    <h1 class="mt-4">Member Register Page</h1>
+    <form th:action="@{/member/register}" class="btn-register" method="post">
+      <div class="form-group">
+      <label for="email">Email</label>
+      <input type="text" name="email" id="email" class="form-control" placeholder="제목" />
+      </div>
+      <div class="form-group">
+        <label for="nickname">Nickname</label>
+        <input type="text" name="nickname" id="nickname" class="form-control" placeholder="내용">
+      </div>
+      <div class="form-group">
+        <label for="pw">Pw</label>
+        <input type="text" name="pw" id="pw" class="form-control" placeholder="작성자" value="user1">
+      </div>
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </form>
+    <script th:inline="javascript">
+      const btnRegister = document.querySelector(".btn-register")
+      const email = document.querySelector("#email")
+      const nickname = document.querySelector("#nickname")
+      const pw = document.querySelector("#pw")
+      btnRegister.onclick = e => {
+        e.preventDefault()
+        if (!email.value) {
+          email.setAttribute('placeholder', "Email을 확인해주세요")
+          email.focus();
+          return;
+        }
+        if (!nickname.value) {
+          nickname.setAttribute('placeholder', "nickname을 확인해주세요")
+          nickname.focus();
+          return;
+        }
+        if (!pw.value) {
+          pw.setAttribute('placeholder', "Pw을 확인해주세요")
+          pw.focus();
+          return;
+        }
+        document.querySelector("form").submit();
+      }
+    </script>
+  </th:block>
+</th:block>
+
+<!--Alt + J 자바의? Alt + 클릭 과 같다-->
+
+<!--th:class="'page-item' + ${pageResultDTO.page==page?' active':''}" > -->
+<!--     ↑ 클릭 했을때 색깔 넣는 코드-->

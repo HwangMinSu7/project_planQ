@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <header class="profile-hero card">
+      <div class="profile-main">
+        <div class="profile-photo-wrap">
+          <img class="profile-photo" th:if="${myPage.member.profileImagePath}"
+               th:src="@{/mypage/profile-image(v=${myPage.member.version})}" alt="내 프로필 사진">
+          <div class="profile-avatar" th:unless="${myPage.member.profileImagePath}"
+               th:text="${#strings.substring(myPage.member.name, 0, 1)}">P</div>
+
+          <form class="profile-photo-form" th:action="@{/mypage/profile-image}"
+                method="post" enctype="multipart/form-data">
+            <label class="profile-photo-button" for="profileImage">📷 사진 바꾸기</label>
+            <input id="profileImage" name="profileImage" type="file" accept="image/*"
+                   onchange="this.form.submit()">
+          </form>
+        </div>
+
+        <div class="profile-identity">
+          <div class="eyebrow">MY PLAN LOG</div>
+          <h1 th:text="${myPage.member.name}">사용자</h1>
+          <p class="profile-email" th:text="${myPage.member.email}">아이디</p>
+          <div class="profile-level-row">
+            <span>LEVEL</span>
+            <strong th:text="|Lv.${myPage.member.level}|">Lv.1</strong>
+          </div>
+          <div class="profile-point-row">
+            <span>POINT</span>
+            <strong th:text="|${myPage.member.rewardPoints}P|">0P</strong>
+          </div>
+          <div class="level-progress">
+            <div class="level-progress-copy">
+              <span>다음 레벨까지</span>
+              <strong th:text="|${myPage.pointsToNextLevel}P|">500P</strong>
+            </div>
+            <div class="level-progress-bar">
+              <i th:style="|width:${myPage.levelProgressPercent}%|"></i>
+            </div>
+            <small th:text="|현재 레벨 ${myPage.levelProgressPercent}% 진행|">현재 레벨 0% 진행</small>
+          </div>
+          <a class="btn-oq ghost small profile-edit-button" th:href="@{/auth/modify}">내 정보 수정</a>
+        </div>
+
+        <aside class="featured-badge">
+          <span class="featured-label">REPRESENT BADGE</span>
+          <div th:if="${myPage.featuredBadge}" class="featured-badge-content">
+            <i th:text="${myPage.featuredBadge.icon}">🏆</i>
+            <strong th:text="${myPage.featuredBadge.name}">대표 뱃지</strong>
+            <p th:text="${myPage.featuredBadge.description}">뱃지 설명</p>
+          </div>
+          <div th:unless="${myPage.featuredBadge}" class="featured-badge-empty">
+            <i>＋</i>
+            <strong>대표 뱃지 선택</strong>
+            <p>아래에서 달고 싶은 뱃지를 골라 보세요.</p>
+          </div>
+        </aside>
+
+        <aside class="weekly-summary">
+          <div class="weekly-head">
+            <div>
+              <span>THIS WEEK</span>
+              <h2>이번 주 퀘스트</h2>
+            </div>
+            <strong th:text="|${myPage.weeklyCompletedCount}/7|">0/7</strong>
+          </div>
+          <div class="weekly-days">
+            <div class="weekly-day" th:each="day : ${myPage.weeklyQuests}"
+                 th:classappend="${day.completed} ? 'completed' : (${day.today} ? 'today' : '')">
+              <span th:text="${day.dayLabel}">월</span>
+              <i th:text="${day.completed ? '✓' : day.date.dayOfMonth}">1</i>
+            </div>
+          </div>
+          <div class="weekly-foot">
+            <span th:text="|이번 주 ${myPage.weeklyCompletedCount}개 완료|">이번 주 0개 완료</span>
+            <strong th:text="|최장 ${myPage.member.longestStreak}일|">최장 0일</strong>
+          </div>
+        </aside>
+      </div>
+
+      <div class="profile-stats">
+        <div class="profile-stat"><span>완료 퀘스트</span><strong th:text="${myPage.completedQuestCount}">0</strong></div>
+        <div class="profile-stat"><span>연속 달성</span><strong th:text="|🔥 ${myPage.member.currentStreak}일|">0일</strong></div>
+        <div class="profile-stat"><span>작성한 글</span><strong th:text="${myPage.postCount}">0</strong></div>
+        <div class="profile-stat"><span>작성한 댓글</span><strong th:text="${myPage.commentCount}">0</strong></div>
+        <div class="profile-stat"><span>참가한 모임</span><strong th:text="${myPage.joinedMeetupCount}">0</strong></div>
+      </div>
+    </header>
+
+    <section class="card panel profile-section">
+      <h2 class="section-title">나의 뱃지</h2>
+      <div class="badge-grid" th:if="${!myPage.badges.empty}">
+        <div class="badge-card" th:each="memberBadge : ${myPage.badges}">
+          <span th:text="${memberBadge.badge.icon}">🏆</span>
+          <div class="badge-card-info"><strong th:text="${memberBadge.badge.name}">뱃지</strong><p th:text="${memberBadge.badge.description}">설명</p></div>
+          <form th:action="@{/mypage/featured-badge}" method="post">
+            <input type="hidden" name="badgeCode" th:value="${memberBadge.badge.code}">
+            <button class="badge-select-button" type="submit"
+                    th:disabled="${myPage.featuredBadge != null and myPage.featuredBadge.code == memberBadge.badge.code}"
+                    th:text="${myPage.featuredBadge != null and myPage.featuredBadge.code == memberBadge.badge.code} ? '대표 뱃지' : '대표로 설정'">대표로 설정</button>
+          </form>
+        </div>
+      </div>
+      <div class="empty" th:if="${myPage.badges.empty}">아직 획득한 뱃지가 없습니다. 첫 퀘스트를 완료해 보세요.</div>
+    </section>
+
+    <section class="mypage-grid">
+      <div class="card panel">
+        <h2 class="section-title">카테고리별 완료</h2>
+        <div class="category-stat" th:each="stat : ${myPage.categoryStats}"><span th:text="${stat.category}">일상</span><strong th:text="|${stat.count}회|">0회</strong></div>
+        <div class="empty" th:if="${myPage.categoryStats.empty}">완료 기록이 쌓이면 취향을 보여 드려요.</div>
+      </div>
+      <div class="card panel">
+        <h2 class="section-title">참가 예정 모임</h2>
+        <a class="mini-list-item" th:each="join : ${myPage.upcomingMeetups}" th:href="@{/community/{id}(id=${join.post.id})}">
+          <div><strong th:text="${join.post.title}">모임</strong><span th:text="${join.post.meetingPlace}">장소</span></div>
+          <time th:text="${#temporals.format(join.post.meetingAt, 'MM.dd HH:mm')}">시간</time>
+        </a>
+        <div class="empty" th:if="${myPage.upcomingMeetups.empty}">참가 예정인 모임이 없습니다.</div>
+      </div>
+    </section>
+
+    <section class="mypage-grid">
+      <div class="card panel">
+        <h2 class="section-title">최근 퀘스트</h2>
+        <div class="mini-list-item" th:each="quest : ${myPage.recentQuests}"><div><strong th:text="${quest.mission.title}">퀘스트</strong><span th:text="${quest.mission.category.label}">분류</span></div><span class="status-pill" th:if="${quest.completed}">CLEAR</span></div>
+      </div>
+      <div class="card panel">
+        <h2 class="section-title">내가 쓴 글</h2>
+        <a class="mini-list-item" th:each="post : ${myPage.recentPosts}" th:href="@{/community/{id}(id=${post.id})}"><div><strong th:text="${post.title}">제목</strong><span th:text="${post.category.label}">분류</span></div><span th:text="|♥ ${post.likeCount}|">0</span></a>
+        <div class="empty" th:if="${myPage.recentPosts.empty}">아직 작성한 글이 없습니다.</div>
+      </div>
+    </section>
+  </th:block>
+</th:block>
+</html>

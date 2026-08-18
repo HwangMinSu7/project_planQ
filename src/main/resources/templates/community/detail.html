@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <div class="detail-layout">
+      <article class="card post-detail">
+        <span class="tag" th:classappend="${detail.post.category.name() == 'MEETUP' ? 'meetup' : (detail.post.category.name() == 'NOTICE' ? 'notice' : '')}" th:text="${detail.post.category.label}">자유</span>
+        <span class="pinned-label" th:if="${detail.post.pinned}">📌 상단 고정</span>
+        <h1 th:text="${detail.post.title}">제목</h1>
+        <div class="post-sub" th:text="${detail.post.regDate != null} ? |${detail.post.author.name} · ${#temporals.format(detail.post.regDate, 'yyyy.MM.dd HH:mm')}| : |${detail.post.author.name} · 기존 데이터|">작성 정보</div>
+        <img class="post-detail-image" th:if="${detail.post.imagePath != null}" th:src="@{/community/{id}/image(id=${detail.post.id})}" alt="게시글 사진">
+        <div class="post-content" th:text="${detail.post.content}">내용</div>
+        <div class="button-row">
+          <form th:action="@{/community/{id}/like(id=${detail.post.id})}" method="post">
+            <button class="like-button" th:classappend="${detail.liked} ? 'liked'" type="submit" th:text="|♥ 좋아요 ${detail.post.likeCount}|">좋아요</button>
+          </form>
+          <a class="btn-oq ghost small" th:href="@{/community}">목록</a>
+          <a class="btn-oq ghost small" th:href="@{/reports/new(targetType='POST',targetId=${detail.post.id})}">신고</a>
+          <a class="btn-oq ghost small" th:if="${detail.owner}" th:href="@{/community/{id}/edit(id=${detail.post.id})}">수정</a>
+          <form th:if="${detail.admin and detail.post.category.name() != 'NOTICE'}" th:action="@{/community/{id}/pin(id=${detail.post.id})}" method="post"><button class="btn-oq ghost small" type="submit" th:text="${detail.post.pinned} ? '고정 해제' : '상단 고정'">상단 고정</button></form>
+          <form th:if="${detail.owner or detail.admin}" th:action="@{/community/{id}/delete(id=${detail.post.id})}" method="post" onsubmit="return confirm('게시글을 삭제할까요?')"><button class="btn-oq danger small" type="submit">삭제</button></form>
+        </div>
+      </article>
+
+      <aside class="card meetup-card" th:if="${detail.post.category.name() == 'MEETUP'}">
+        <div class="eyebrow" style="color:#c9ff47">MEETUP PLAN</div><h3 class="section-title">함께할 사람?</h3>
+        <div class="meetup-info">
+          <div><span>WHEN</span><strong th:text="${#temporals.format(detail.post.meetingAt, 'yyyy.MM.dd HH:mm')}">시간</strong></div>
+          <div><span>WHERE</span><strong th:text="${detail.post.meetingPlace}">장소</strong></div>
+          <div><span>MEMBER</span><strong th:text="|${detail.post.participantCount} / ${detail.post.maxParticipants}명|">0명</strong></div>
+        </div>
+        <div class="participant-list"><span th:each="participant : ${detail.participants}" th:text="${participant.member.name}">참가자</span></div>
+        <form th:unless="${detail.joined}" th:action="@{/community/{id}/join(id=${detail.post.id})}" method="post"><button class="btn-oq secondary" style="width:100%" type="submit">모임 참가하기</button></form>
+        <form th:if="${detail.joined}" th:action="@{/community/{id}/leave(id=${detail.post.id})}" method="post"><button class="btn-oq ghost" style="width:100%" type="submit">참가 취소</button></form>
+      </aside>
+    </div>
+
+    <section class="card comments-card">
+      <h3 class="section-title" th:text="|댓글 ${detail.post.commentCount}|">댓글</h3>
+      <form class="comment-form" th:action="@{/community/{id}/comments(id=${detail.post.id})}" method="post">
+        <input class="form-control-oq" name="content" maxlength="600" placeholder="같이 나누고 싶은 이야기를 적어 주세요." required>
+        <button class="btn-oq" type="submit">댓글 등록</button>
+      </form>
+      <div style="margin-top:18px">
+        <div class="comment" th:each="comment : ${detail.comments}" th:classappend="${comment.pinned} ? 'pinned'">
+          <div><div class="comment-author" th:text="${comment.author.name}">작성자</div><div class="comment-time" th:text="${#temporals.format(comment.regDate, 'MM.dd HH:mm')}">시간</div></div>
+          <div class="comment-body">
+            <span class="comment-pinned-label" th:if="${comment.pinned}">📌 작성자 고정</span>
+            <div th:text="${comment.content}">댓글</div>
+            <div class="comment-actions">
+              <form th:action="@{/community/{postId}/comments/{commentId}/like(postId=${detail.post.id},commentId=${comment.id})}" method="post"><button class="comment-like" th:classappend="${detail.likedCommentIds.contains(comment.id)} ? 'liked'" type="submit" th:text="|♥ ${comment.likeCount}|">♥ 0</button></form>
+              <form th:if="${detail.owner}" th:action="@{/community/{postId}/comments/{commentId}/pin(postId=${detail.post.id},commentId=${comment.id})}" method="post"><button class="link-button" type="submit" th:text="${comment.pinned} ? '고정 해제' : '댓글 고정'">댓글 고정</button></form>
+              <a class="link-button" th:href="@{/reports/new(targetType='COMMENT',targetId=${comment.id})}">신고</a>
+            </div>
+          </div>
+          <form th:if="${#authentication.name == comment.author.email or detail.admin}" th:action="@{/community/{postId}/comments/{commentId}/delete(postId=${detail.post.id},commentId=${comment.id})}" method="post"><button class="link-button" type="submit">삭제</button></form>
+        </div>
+        <div class="empty" th:if="${detail.comments.empty}">아직 댓글이 없습니다.</div>
+      </div>
+    </section>
+  </th:block>
+</th:block>
+</html>

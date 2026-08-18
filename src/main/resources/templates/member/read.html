@@ -1,0 +1,78 @@
+<!--상세 페이지-->
+<!--상세 페이지-->
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layout/basic::setNickname(~{this::nickname})}">
+  <th:block th:fragment="nickname">
+    <style>
+        .form-group {margin: 30px 0 30px 0;}
+    </style>
+    <h1 class="mt-4">Member Read Page</h1>
+    <form th:action="@{/member/register}" method="post">
+      <div class="form-group">
+        <label for="mid">Mid</label>
+        <input type="text" name="mid" id="mid" class="form-control" th:value="${memberDTO.mid}" readonly />
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="text" name="email" id="email" class="form-control" th:value="${memberDTO.email}" readonly />
+      </div>
+      <div class="form-group">
+        <label for="nickname">Nickname</label>
+        <input type="text" name="nickname" id="nickname" class="form-control"
+               th:value="${memberDTO.nickname}" readonly />
+      </div>
+      <div class="form-group">
+        <label>Regist Date</label>
+        <input type="text" class="form-control"
+               th:value="${#temporals.format(memberDTO.regDate, 'yyyy/MM/dd hh:mm')}" readonly>
+      </div>
+      <div class="form-group">
+        <label>Modified Date</label>
+        <input type="text" class="form-control"
+               th:value="${#temporals.format(memberDTO.modDate, 'yyyy/MM/dd hh:mm')}" readonly>
+      </div>
+      <div class="form-group">
+        <a th:href="@{/member/modify(page=${pageRequestDTO.page}, mid=${memberDTO.mid}, type=${pageRequestDTO.type},keyword=${pageRequestDTO.keyword})}" class="btn btn-primary">Modify</a>
+        <a th:href="@{/member/list(page=${pageRequestDTO.page}, type=${pageRequestDTO.type},keyword=${pageRequestDTO.keyword})}" class="btn btn-info">List</a>
+      </div>
+    </form>
+    <!-- start bootstrap.com modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-nickname">
+          <div class="modal-header">
+            <h1 class="modal-email fs-5" id="exampleModalLabel">Modal email</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <!-- <button type="button"  class="btn btn-primary">Save changes</button> -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <script th:inline="javascript">
+      window.onload = () => {
+        let msg = /*[[${msg}]]*/'msg'
+        if (msg) {
+          const myModal = new bootstrap.Modal(document.querySelector('#myModal'), {backdrop: true});
+          document.querySelector(".modal-email").innerHTML = '<p>알림</p>'
+          document.querySelector(".modal-body").textNickname = msg
+          myModal.show();
+          history.replaceState({}, null, null) //모달창 띄운 흔적을 history에서 제거
+        }
+      }
+    </script>
+  </th:block>
+</th:block>
+</html>
+
+<!--Alt + J 자바의? Alt + 클릭 과 같다-->
+
+<!--th:class="'page-item' + ${pageResultDTO.page==page?' active':''}" > -->
+<!--     ↑ 클릭 했을때 색깔 넣는 코드-->
+
+<!--찾을 코드를 드래그 한후 Ctrl + Shift + F 를 하면 이때 까지한 같은 코드들이 나오고
+거기서 찾아써도 된다.-->

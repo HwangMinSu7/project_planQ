@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <div class="form-card card">
+      <div class="eyebrow">WRITE</div><h1 class="section-title" th:text="${editMode} ? '게시글 수정' : '새 이야기 만들기'">글쓰기</h1>
+      <form th:action="${editMode} ? @{/community/{id}/edit(id=${postId})} : @{/community}" method="post" enctype="multipart/form-data" th:object="${form}">
+        <div class="field"><label for="category">종류</label><select class="form-control-oq" id="category" th:field="*{category}" onchange="toggleMeetup()"><option th:each="category : ${categories}" th:value="${category}" th:text="${category.label}"></option></select></div>
+        <div class="field"><label for="title">제목</label><input class="form-control-oq" id="title" th:field="*{title}" maxlength="160" required></div>
+        <div class="field"><label for="content">내용</label><textarea class="form-control-oq" id="content" th:field="*{content}" maxlength="5000" style="min-height:240px" required></textarea></div>
+        <div class="field">
+          <label for="image">게시글 사진 <span class="help">(선택 · 1장 · 최대 5MB)</span></label>
+          <input class="form-control-oq" id="image" type="file" th:field="*{image}" accept="image/*">
+          <img id="currentPostImage" class="community-form-preview" th:if="${editMode and form.hasImage}" th:src="@{/community/{id}/image(id=${postId})}" alt="현재 게시글 사진">
+          <img id="newPostImage" class="community-form-preview hidden" alt="새 게시글 사진 미리보기">
+          <label class="image-remove-check" th:if="${editMode and form.hasImage}"><input id="removeImage" type="checkbox" th:field="*{removeImage}"> 현재 사진 삭제</label>
+        </div>
+        <div id="meetupFields" class="field-grid">
+          <div class="field"><label for="meetingAt">모임 시간</label><input class="form-control-oq" id="meetingAt" type="datetime-local" th:field="*{meetingAt}"></div>
+          <div class="field"><label for="meetingPlace">모임 장소</label><input class="form-control-oq" id="meetingPlace" th:field="*{meetingPlace}" maxlength="150"></div>
+          <div class="field"><label for="maxParticipants">정원</label><input class="form-control-oq" id="maxParticipants" type="number" min="2" max="100" th:field="*{maxParticipants}"></div>
+        </div>
+        <div class="button-row"><button class="btn-oq" type="submit" th:text="${editMode} ? '수정 완료' : '등록하기'">등록</button><a class="btn-oq ghost" th:href="@{/community}">취소</a></div>
+      </form>
+    </div>
+    <script>
+      function toggleMeetup() {
+        const meetup = document.querySelector('#category').value === 'MEETUP';
+        document.querySelector('#meetupFields').style.display = meetup ? 'grid' : 'none';
+        ['meetingAt','meetingPlace','maxParticipants'].forEach(id => document.querySelector('#' + id).required = meetup);
+      }
+      toggleMeetup();
+      const imageInput = document.querySelector('#image');
+      const newImage = document.querySelector('#newPostImage');
+      const currentImage = document.querySelector('#currentPostImage');
+      const removeImage = document.querySelector('#removeImage');
+      imageInput.addEventListener('change', () => {
+        const file = imageInput.files[0];
+        if (!file) return;
+        newImage.src = URL.createObjectURL(file);
+        newImage.classList.remove('hidden');
+        if (currentImage) currentImage.classList.add('hidden');
+        if (removeImage) removeImage.checked = false;
+      });
+      if (removeImage) removeImage.addEventListener('change', () => {
+        if (currentImage) currentImage.classList.toggle('hidden', removeImage.checked);
+      });
+    </script>
+  </th:block>
+</th:block>
+</html>

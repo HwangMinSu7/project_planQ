@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layout/basic::setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <header class="dashboard-head">
+      <div>
+        <div class="eyebrow" th:text="|WELCOME, ${dashboard.member.name}|">WELCOME</div>
+        <h1 class="page-title">오늘 딱 하나만.</h1>
+        <p class="page-copy">작은 행동을 완료하고 포인트와 스트릭을 쌓아 보세요.</p>
+      </div>
+      <div class="reward-strip">
+        <div class="reward-item"><span>LEVEL</span><strong th:text="|Lv.${dashboard.member.level}|">Lv.1</strong></div>
+        <div class="reward-item"><span>POINT</span><strong th:text="|${dashboard.member.rewardPoints}P|">0P</strong></div>
+        <div class="reward-item"><span>STREAK</span><strong th:text="|🔥 ${dashboard.member.currentStreak}일|">0일</strong></div>
+      </div>
+    </header>
+
+    <section class="quest-grid">
+      <article class="card quest-card">
+        <div class="quest-meta">
+          <span th:text="|DAY ${#temporals.format(dashboard.today.questDate, 'dd')}|">DAY</span>
+          <span class="quest-category" th:text="${dashboard.today.mission.category.label}">일상</span>
+        </div>
+        <div class="clear-stamp" th:if="${dashboard.today.completed}">CLEAR</div>
+        <h2 th:text="${dashboard.today.mission.title}">오늘의 미션</h2>
+        <p th:text="${dashboard.today.mission.description}">미션 설명</p>
+        <div class="quest-actions" th:unless="${dashboard.today.completed}">
+          <form th:if="${!dashboard.today.rerolled}" th:action="@{/quest/reroll}" method="post">
+            <button class="btn-oq secondary" type="submit">↻ 한 번 바꾸기</button>
+          </form>
+          <span th:if="${dashboard.today.rerolled}" class="help" style="color:white">오늘의 교체 기회를 사용했습니다.</span>
+        </div>
+        <div th:if="${dashboard.today.completed}" style="position:relative;z-index:1;margin-top:28px">
+          <strong th:if="${dashboard.today.note}" th:text="${dashboard.today.note}"></strong>
+        </div>
+      </article>
+
+      <aside class="card proof-form">
+        <div th:unless="${dashboard.today.completed}">
+          <div class="eyebrow">PROOF</div><h3 class="section-title">오늘의 인증</h3>
+          <form th:action="@{/quest/complete}" method="post" enctype="multipart/form-data">
+            <label for="note">한 줄 기록</label>
+            <textarea class="form-control-oq" id="note" name="note" maxlength="500" placeholder="해보니 어땠나요?"></textarea>
+            <label for="proofImage">인증 사진 <span class="help">(선택)</span></label>
+            <input class="form-control-oq" id="proofImage" name="proofImage" type="file" accept="image/*">
+            <p class="help">한 줄 기록 또는 사진 중 하나만 있어도 완료할 수 있어요.</p>
+            <button class="btn-oq" type="submit" style="width:100%">퀘스트 완료 +100P</button>
+          </form>
+          <div class="reward-note"><strong>보상 규칙</strong><br>기본 100P + 연속 달성 하루당 10P<br>500P마다 레벨이 올라갑니다.</div>
+        </div>
+        <div th:if="${dashboard.today.completed}">
+          <div class="eyebrow">COMPLETED</div><h3 class="section-title">오늘도 해냈어요!</h3>
+          <img th:if="${dashboard.today.proofImagePath}" th:src="@{/quest/proof/{id}(id=${dashboard.today.id})}" alt="오늘의 인증" style="width:100%;max-height:280px;object-fit:cover;border-radius:16px">
+          <p class="page-copy" style="margin-top:16px">내일 새로운 퀘스트가 자동으로 열립니다.</p>
+          <a class="btn-oq ghost" th:href="@{/community/new}" style="width:100%;margin-top:15px">커뮤니티에 이야기 남기기</a>
+        </div>
+      </aside>
+    </section>
+
+    <section class="two-sections">
+      <div class="card panel">
+        <h3 class="section-title">나의 퀘스트 로그</h3>
+        <div class="history-list" th:if="${!dashboard.history.empty}">
+          <div class="history-item" th:each="quest : ${dashboard.history}">
+            <span class="history-date" th:text="${#temporals.format(quest.questDate, 'MM.dd')}">08.13</span>
+            <strong th:text="${quest.mission.title}">미션</strong>
+            <span class="status-pill" th:if="${quest.completed}">CLEAR</span>
+            <span class="help" th:unless="${quest.completed}">진행 중</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card panel">
+        <h3 class="section-title">방금 올라온 인증</h3>
+        <div class="proof-feed" th:if="${!dashboard.communityProofs.empty}">
+          <div class="proof-tile" th:each="quest : ${dashboard.communityProofs}">
+            <img th:if="${quest.proofImagePath}" th:src="@{/quest/proof/{id}(id=${quest.id})}" alt="인증 사진">
+            <div><strong th:text="${quest.mission.title}">미션</strong><span th:text="${quest.member.name}">사용자</span></div>
+          </div>
+        </div>
+        <div class="empty" th:if="${dashboard.communityProofs.empty}">첫 인증의 주인공이 되어 보세요.</div>
+      </div>
+    </section>
+  </th:block>
+</th:block>
+</html>
